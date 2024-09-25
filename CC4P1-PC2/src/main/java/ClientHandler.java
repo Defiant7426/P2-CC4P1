@@ -25,8 +25,7 @@ public class ClientHandler implements Runnable { // Se crea la clase ClientHandl
 
             String clientMessage;
             while ((clientMessage = input.readLine()) != null) { // Se lee el mensaje del cliente
-                broadcastMessage(playerName + ": " + clientMessage); // Se envía el mensaje a todos los jugadores
-                System.out.println(playerName + ": " + clientMessage); // Se imprime el mensaje en la consola
+                handleClientMessage(clientMessage); // Se procesa el mensaje del cliente
             }
 
         } catch (IOException e) {
@@ -46,6 +45,11 @@ public class ClientHandler implements Runnable { // Se crea la clase ClientHandl
         for (ClientHandler client : clients) {
             client.output.println(message); // Se envía el mensaje a todos los clientes
         }
+    }
+
+    private void handleClientMessage(String message) {
+        System.out.println(playerName + ": " + message); // Se imprime el mensaje en la consola
+        broadcastMessage(playerName + ": " + message); // Se envía el mensaje a todos los jugadores
     }
 
 }
