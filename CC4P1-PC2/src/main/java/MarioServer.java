@@ -5,9 +5,9 @@ import java.net.*;
 public class MarioServer {
     private static final int PORT = 5684; // Este es el puerto que se va a utilizar para la comunicación
     private static List<ClientHandler> clients = new ArrayList<>(); // Lista de clientes conectados
-    private static Map<ClientHandler, PlayerInfo> playerInfo = new HashMap<>();
+    static Map<ClientHandler, PlayerInfo> playerInfo = new HashMap<>();
     private static String[] colors = {"RED", "BLUE", "GREEN", "YELLOW", "ORANGE", "PINK", "CYAN", "MAGENTA"};
-    private static int colorIndex = 0; // Índice del color actual
+    private static int colorIndex = 0; // indice del color actual
 
     public static void main(String[] args) throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) { // Se crea el socket del servidor
@@ -35,5 +35,6 @@ public class MarioServer {
             this.x = x;
             this.y = y;
         }
+
     }
 }

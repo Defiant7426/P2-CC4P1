@@ -3,94 +3,153 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
-public class MarioClient extends JFrame {
-    private static final String SERVER_IP = "172.17.32.23"; // IP del servidor
-    private static final int SERVER_PORT = 5684; // Puerto del servidor
-    private Socket socket; // Socket del cliente
-    private PrintWriter out; // Buffer de escritura
-    private BufferedReader in; // Buffer de lectura
-    private JPanel gamePanel; // Panel del juego
-    private int playerX = 0, playerY = 0; // Posición del jugador
+public class MarioClient extends JFrame implements KeyListener {
+    private static final int WIDTH = 800;
+    private static final int HEIGHT = 600;
+    private static final String HOST = "172.17.32.23";
+    private static final int PORT = 5684;
+
+    private Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
+    private GamePanel gamePanel;
+    private Map<String, Player> players = new HashMap<>();
+    private String myColor;
 
     public MarioClient() {
         setTitle("Mario Bros Multijugador");
-        setSize(800, 600); // Tamaño de la ventana
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Al cerrar la ventana, se cierra el programa
+        setSize(WIDTH, HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        gamePanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) { // Método para dibujar en el panel
-                super.paintComponent(g); // Se llama al método paintComponent de la clase padre
-                g.setColor(Color.RED); // Se establece el color rojo
-                g.fillRect(playerX, playerY, 30, 30); // Se dibuja un rectángulo en la posición del jugador
-            }
-        };
-        add(gamePanel); // Se agrega el panel al frame
+        gamePanel = new GamePanel();
+        add(gamePanel);
+        addKeyListener(this);
 
-        addKeyListener(new KeyAdapter() { // Se agrega un KeyListener al frame
-            @Override
-            public void keyPressed(KeyEvent e) { // Método que se ejecuta al presionar una tecla
-                movePlayer(e.getKeyCode()); // Se mueve el jugador en función de la tecla presionada
-            }
-        });
-
-        setFocusable(true); // Se establece el foco en el frame
-
-        connectToServer(); // Se conecta al servidor
+        connectToServer();
     }
 
     private void connectToServer() {
         try {
-            socket = new Socket(SERVER_IP, SERVER_PORT); // Se crea el socket del cliente
-            out = new PrintWriter(socket.getOutputStream(), true); // Se crea un buffer de escritura
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // Se crea un buffer de lectura
+            socket = new Socket(HOST, PORT);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // Iniciar un hilo para recibir mensajes del servidor
+            // Recibir el color asignado por el servidor
+            String colorMessage = in.readLine();
+            if (colorMessage.startsWith("COLOR")) {
+                myColor = colorMessage.split(" ")[1];
+                players.put(myColor, new Player(0, 0, myColor));
+            }
+
             new Thread(this::receiveMessages).start();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void movePlayer(int keyCode) {
-        switch (keyCode) {
-            case KeyEvent.VK_LEFT: // Si se presiona la tecla de la izquierda
-                playerX -= 5; // Se mueve el jugador hacia la izquierda
-                break;
-            case KeyEvent.VK_RIGHT: // Si se presiona la tecla de la derecha
-                playerX += 5; // Se mueve el jugador hacia la derecha
-                break;
-            case KeyEvent.VK_UP: // Si se presiona la tecla de arriba
-                playerY -= 5; // Se mueve el jugador hacia arriba
-                break;
-            case KeyEvent.VK_DOWN: // Si se presiona la tecla de abajo
-                playerY += 5; // Se mueve el jugador hacia abajo
-                break;
-        }
-        gamePanel.repaint(); // Se vuelve a pintar el panel
-        sendPosition(); // Se envía la posición del jugador al servidor
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // No se necesita implementar
     }
 
-    private void sendPosition() { // Método para enviar la posición del jugador al servidor
-        out.println("MOVE " + playerX + " " + playerY); // Se envía un mensaje al servidor con la posición del jugador
+    @Override
+    public void keyPressed(KeyEvent e) {
+        Player myPlayer = players.get(myColor);
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT:
+                myPlayer.x -= 5;
+                break;
+            case KeyEvent.VK_RIGHT:
+                myPlayer.x += 5;
+                break;
+            case KeyEvent.VK_UP:
+                myPlayer.y -= 5;
+                break;
+            case KeyEvent.VK_DOWN:
+                myPlayer.y += 5;
+                break;
+        }
+        gamePanel.repaint();
+        sendPosition();
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // No se necesita implementar
+    }
+
+    private void sendPosition() {
+        Player myPlayer = players.get(myColor);
+        out.println("MOVE " + myPlayer.x + " " + myPlayer.y);
     }
 
     private void receiveMessages() {
         try {
-            String message; // Variable para almacenar los mensajes del servidor
-            while ((message = in.readLine()) != null) { // Se lee un mensaje del servidor
-                System.out.println("Mensaje del servidor: " + message);
-                // Aquí se procesarían los mensajes del servidor
+            String message;
+            while ((message = in.readLine()) != null) {
+                if (message.startsWith("POSITIONS")) {
+                    updatePlayerPositions(message.substring(10));
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void updatePlayerPositions(String positionsData) {
+        String[] playerPositions = positionsData.split(";");
+        for (String playerPosition : playerPositions) {
+            String[] data = playerPosition.split(",");
+            if (data.length == 3) {
+                String color = data[0];
+                int x = Integer.parseInt(data[1]);
+                int y = Integer.parseInt(data[2]);
+                players.put(color, new Player(x, y, color));
+            }
+        }
+        gamePanel.repaint();
+    }
+
+    private class GamePanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            for (Player player : players.values()) {
+                g.setColor(getColorFromString(player.color));
+                g.fillRect(player.x, player.y, 30, 30);
+            }
+        }
+    }
+
+    private Color getColorFromString(String colorStr) {
+        switch (colorStr.toUpperCase()) {
+            case "RED": return Color.RED;
+            case "BLUE": return Color.BLUE;
+            case "GREEN": return Color.GREEN;
+            case "YELLOW": return Color.YELLOW;
+            case "ORANGE": return Color.ORANGE;
+            case "PINK": return Color.PINK;
+            case "CYAN": return Color.CYAN;
+            case "MAGENTA": return Color.MAGENTA;
+            default: return Color.BLACK;
+        }
+    }
+
+    private static class Player {
+        int x, y;
+        String color;
+
+        Player(int x, int y, String color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+        }
+    }
+
     public static void main(String[] args) {
-        // Se crea una instancia de MarioClient y se hace visible
         SwingUtilities.invokeLater(() -> new MarioClient().setVisible(true));
     }
 }

@@ -1,55 +1,65 @@
 import java.io.*;
 import java.net.*;
 import java.util.List;
+import java.util.Map;
 
-public class ClientHandler implements Runnable { // Se crea la clase ClientHandler que implementa la interfaz Runnable
-    private Socket clientSocket;
-    private List<ClientHandler> clients;
-    private PrintWriter output;
-    private BufferedReader input;
-    private String playerName;
+class ClientHandler implements Runnable {
+    private final Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
+    private final List<ClientHandler> clients;
+    private final String color;
 
-    public ClientHandler(Socket socket, List<ClientHandler> clients) throws IOException {
-        this.clientSocket = socket;
-        this.clients = clients;
-        input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); // Se crea un buffer de lectura
-        output = new PrintWriter(clientSocket.getOutputStream(), true); // Se crea un buffer de escritura
+    public ClientHandler(Socket socket, List<ClientHandler> clients, String color) {
+        this.socket = socket; // Se asigna el socket del cliente
+        this.clients = clients; // Se asigna la lista de clientes
+        this.color = color; // Se asigna el color del cliente
+        try {
+            out = new PrintWriter(socket.getOutputStream(), true); // Se crea un buffer de escritura
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // Se crea un buffer de lectura
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void run() {
         try {
-            output.println("Bienvenido al servidor de Mario Bros. Introduce tu nombre: ");
-            playerName = input.readLine(); // Se lee el nombre del jugador
-            broadcastMessage(playerName + " se ha unido al juego."); // Se envía un mensaje a todos los jugadores
-
-            String clientMessage;
-            while ((clientMessage = input.readLine()) != null) { // Se lee el mensaje del cliente
-                handleClientMessage(clientMessage); // Se procesa el mensaje del cliente
+            out.println("COLOR " + color); // Envía el color asignado al cliente
+            String inputLine; // Variable para almacenar los mensajes del cliente
+            while ((inputLine = in.readLine()) != null) { // Se lee un mensaje del cliente
+                if (inputLine.startsWith("MOVE")) { // Si el mensaje es para mover al jugador
+                    String[] parts = inputLine.split(" "); // Se divide el mensaje en partes
+                    int x = Integer.parseInt(parts[1]); // Se obtiene la posición x del jugador
+                    int y = Integer.parseInt(parts[2]); // Se obtiene la posición y del jugador
+                    MarioServer.playerInfo.get(this).x = x; // Se actualiza la posición x del jugador
+                    MarioServer.playerInfo.get(this).y = y; // Se actualiza la posición y del jugador
+                    broadcastPositions(); // Se envían las posiciones de los jugadores a todos los clientes
+                }
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
+            System.out.println("Error handling client: " + e.getMessage());
+        } finally { // Se cierra la conexión con el cliente
             try {
-                clientSocket.close(); // Se cierra el socket del cliente
-                clients.remove(this); // Se elimina el cliente de la lista de clientes
-                broadcastMessage(playerName + " ha abandonado el juego."); // Se envía un mensaje a todos los jugadores
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            clients.remove(this);
+            MarioServer.playerInfo.remove(this); // Se elimina la información del jugador
+            broadcastPositions();
         }
     }
 
-    private void broadcastMessage(String message) {
+    private void broadcastPositions() {
+        StringBuilder message = new StringBuilder("POSITIONS ");
+        for (Map.Entry<ClientHandler, MarioServer.PlayerInfo> entry : MarioServer.playerInfo.entrySet()) {
+            MarioServer.PlayerInfo info = entry.getValue();
+            message.append(info.color).append(",").append(info.x).append(",").append(info.y).append(";");
+        }
         for (ClientHandler client : clients) {
-            client.output.println(message); // Se envía el mensaje a todos los clientes
+            client.out.println(message);
         }
+        System.out.println("Broadcasting positions: " + message);
     }
-
-    private void handleClientMessage(String message) {
-        System.out.println(playerName + ": " + message); // Se imprime el mensaje en la consola
-        broadcastMessage(playerName + ": " + message); // Se envía el mensaje a todos los jugadores
-    }
-
 }
