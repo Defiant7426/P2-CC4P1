@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.*;
 
 public class MarioClient extends JFrame {
-    private static final String SERVER_IP = "localhost"; // IP del servidor
+    private static final String SERVER_IP = "172.17.32.23"; // IP del servidor
     private static final int SERVER_PORT = 5684; // Puerto del servidor
     private Socket socket; // Socket del cliente
     private PrintWriter out; // Buffer de escritura
