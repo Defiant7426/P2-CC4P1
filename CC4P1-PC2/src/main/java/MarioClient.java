@@ -4,12 +4,14 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 
 public class MarioClient extends JFrame implements KeyListener {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
     private static final String HOST = "172.17.32.23";
     private static final int PORT = 5684;
+    private List<Platform> plataforms;
 
     private Socket socket;
     private PrintWriter out;
@@ -29,6 +31,14 @@ public class MarioClient extends JFrame implements KeyListener {
         addKeyListener(this);
 
         connectToServer();
+        initializePlataforms();
+    }
+
+    private void initializePlataforms(){
+        plataforms = new ArrayList<>();
+        plataforms.add(new Platform(0, 370, 1000, 50, "BROWN")); // suelo
+        plataforms.add(new Platform(310, 265, 40, 105, "GREEN")); // Muro 1
+        plataforms.add(new Platform(550, 265, 40, 105, "GREEN")); // Muro 2
     }
 
     private void connectToServer() {
@@ -41,7 +51,7 @@ public class MarioClient extends JFrame implements KeyListener {
             String colorMessage = in.readLine();
             if (colorMessage.startsWith("COLOR")) {
                 myColor = colorMessage.split(" ")[1];
-                players.put(myColor, new Player(0, 0, myColor));
+                players.put(myColor, new Player(25, 340, myColor));
             }
 
             new Thread(this::receiveMessages).start();
@@ -121,6 +131,11 @@ public class MarioClient extends JFrame implements KeyListener {
                 g.setColor(getColorFromString(player.color));
                 g.fillRect(player.x, player.y, 30, 30);
             }
+
+            for(Platform platform : plataforms){
+                g.setColor(getColorFromString(platform.color));
+                g.fillRect(platform.x, platform.y, platform.width, platform.height);
+            }
         }
     }
 
@@ -134,6 +149,8 @@ public class MarioClient extends JFrame implements KeyListener {
             case "PINK": return Color.PINK;
             case "CYAN": return Color.CYAN;
             case "MAGENTA": return Color.MAGENTA;
+            case "WHITE": return Color.WHITE;
+            case "BROWN": return new Color(139, 69, 19);
             default: return Color.BLACK;
         }
     }
