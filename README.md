@@ -39,7 +39,7 @@ que aparecen ocasionalmente.
 
 Monedas: Recoger monedas otorga puntos adicionales
 
-![image.png](image.png)
+![image.png](img/image.png)
 
 # Jugadores
 
@@ -68,7 +68,7 @@ humanos que estarán en la red
 Desarrollar un modo multijugador, donde varios jugadores (rivales) jueguen entre ellos y contra los otros Jugadores, y donde gana el que consiga comer más monedas y no chocar con sus rivales, objetos o enemigos.
 El escenario es extenso y el jugador puede moverse y recorrer por todo el usuario ya sea derecha, izquierda, saltando o bajando. Un jugador puede estar representado con caracteres, por ejemplo.
 
-![image.png](image%201.png)
+![image.png](img/image%201.png)
 
 Debe funcionar en java, y como mínimo en Java 8 com.
 
@@ -336,23 +336,23 @@ Al iniciar el servidor, veremos un mensaje indicando que está en espera de juga
 
 Al ejecutar el servidor:
 
-![image.png](image%202.png)
+![image.png](img/image%202.png)
 
 Al ejecutar el cliente:
 
-![image.png](image%203.png)
+![image.png](img/image%203.png)
 
 Cuando presionamos las flechas, el “mario” rojo se mueve y en la parte del cliente nos sale lo siguiente:
 
-![image.png](image%204.png)
+![image.png](img/image%204.png)
 
 y por parte del servidor nos sale:
 
-![image.png](image%205.png)
+![image.png](img/image%205.png)
 
 Hasta el momento tenemos el siguiente diagrama 
 
-![image.png](image%206.png)
+![image.png](img/image%206.png)
 
 ## 3. Creando al segundo jugador
 
@@ -854,7 +854,7 @@ public class MarioClient extends JFrame implements KeyListener {
 }
 ```
 
-![image.png](image%207.png)
+![image.png](img/image%207.png)
 
 ## Añadiendo físicas al juego
 
