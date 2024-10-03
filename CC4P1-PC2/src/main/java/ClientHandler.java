@@ -49,7 +49,7 @@ class ClientHandler implements Runnable {
             MarioServer.playerInfo.remove(this); // Se elimina la información del jugador
             broadcastPositions();
         }
-    }
+    }   
 
     private void broadcastPositions() {
         StringBuilder message = new StringBuilder("POSITIONS ");

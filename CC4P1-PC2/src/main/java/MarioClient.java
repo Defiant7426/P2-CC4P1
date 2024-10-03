@@ -10,7 +10,7 @@ import java.util.List;
 public class MarioClient extends JFrame implements KeyListener {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
-    private static final String HOST = "localhost";//"192.168.18.7";
+    private static final String HOST = "172.17.32.90";//"localhost";
     private static final int PORT = 5684;
     private List<Platform> plataforms;
 
@@ -18,19 +18,16 @@ public class MarioClient extends JFrame implements KeyListener {
     private PrintWriter out;
     private BufferedReader in;
     private GamePanel gamePanel;
-    private Map<String, Player> players = new HashMap<>();
+    private Map<String, Player> players = new HashMap<>(); // Sirve para almacenar la información de los jugadores
     private String myColor;
     private Timer timer;
+    private List<Enemy> enemies;
+    private Map<String, Integer> playerLives; // Sirve para almacenar las vidas de los jugadores
 
     private final int GRAVEDAD = 5;
     private final int SALTO_Y = -80;
     private final int VELOCIDAD_X = 10;
-
-    private List<Enemy> enemies;
     private static final int INITIAL_LIVES = 3;
-    private Map<String, Integer> playerLives;
-
-
 
     public MarioClient() {
         setTitle("Mario Bros Multijugador");
